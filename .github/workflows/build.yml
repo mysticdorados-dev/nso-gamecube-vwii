@@ -1,0 +1,19 @@
+name: Build NSO GameCube Wii probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitppc:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build homebrew
+        run: make
+      - name: Upload DOL
+        uses: actions/upload-artifact@v4
+        with:
+          name: nsogc_probe_vwii_dol
+          path: nsogc_probe.dol
