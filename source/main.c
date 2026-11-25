@@ -113,14 +113,14 @@ int main(int argc, char **argv) {
     hid_id = find_device(0x03, hid_list);
     printf("Vendor class 0xFF device ID: %ld\n", (long)vendor_id);
     printf("HID class 0x03 device ID: %ld\n", (long)hid_id);
-    if(vendor_id < 0) {
+    if(vendor_id == -1) {
         printf("\nSTOP: Vendor interface not visible to IOS58.\n");
         printf("This is the key missing capability to investigate.\n");
         goto finish;
     }
     r = USB_OpenDevice(vendor_id, NSOGC_VID, NSOGC_PID, &vendor_fd);
     printf("Open vendor interface: %ld, fd %ld\n", (long)r, (long)vendor_fd);
-    if(r < 0 || vendor_fd < 0) goto finish;
+    if(r < 0) goto finish;
 
     printf("\nRunning 10 volatile initialization commands...\n");
     for (i = 0; i < (int)nsogc_init_command_count; ++i) {
