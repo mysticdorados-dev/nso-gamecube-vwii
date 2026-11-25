@@ -1,0 +1,51 @@
+#include "nsogc_protocol.h"
+#include <string.h>
+/* USB vendor-interface initialization sequence, based on SDL3
+ * src/joystick/hidapi/SDL_hidapi_switch2.c (init_sequence,
+ * SET_REPORT_FORMAT=0x0A, START_OUTPUT). Only volatile commands:
+ * NO flash writes, erase, firmware updates, or pairing changes.
+ */
+static const uint8_t c0[] = { 0x07,0x91,0x00,0x01,0x00,0x00,0x00,0x00 };
+static const uint8_t c1[] = { 0x0c,0x91,0x00,0x02,0x00,0x04,0x00,0x00,0x27,0x00,0x00,0x00 };
+static const uint8_t c2[] = { 0x11,0x91,0x00,0x01,0x00,0x00,0x00,0x00 };
+static const uint8_t c3[] = { 0x0a,0x91,0x00,0x08,0x00,0x14,0x00,0x00,
+    0x01,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x35,0x00,0x46,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
+static const uint8_t c4[] = { 0x0c,0x91,0x00,0x04,0x00,0x04,0x00,0x00,0x27,0x00,0x00,0x00 };
+static const uint8_t c5[] = { 0x01,0x91,0x00,0x0c,0x00,0x00,0x00,0x00 };
+static const uint8_t c6[] = { 0x01,0x91,0x00,0x01,0x00,0x00,0x00,0x00 };
+static const uint8_t c7[] = { 0x08,0x91,0x00,0x02,0x00,0x04,0x00,0x00,0x01,0x00,0x00,0x00 };
+static const uint8_t c8[] = { 0x03,0x91,0x00,0x0a,0x00,0x04,0x00,0x00,0x0a,0x00,0x00,0x00 };
+static const uint8_t c9[] = { 0x03,0x91,0x00,0x0d,0x00,0x08,0x00,0x00,
+    0x01,0x00,0xff,0xff,0xff,0xff,0xff,0xff };
+#define CMD(x, txt) { x, sizeof(x), txt }
+const struct nsogc_command nsogc_init_commands[] = {
+    CMD(c0, "Handshake"), CMD(c1, "Feature mask"), CMD(c2, "Handshake 2"),
+    CMD(c3, "Rumble setup"), CMD(c4, "Enable features"),
+    CMD(c5, "Unknown init"), CMD(c6, "Enable rumble"),
+    CMD(c7, "Grip buttons"), CMD(c8, "GC report 0x0A"),
+    CMD(c9, "Start reports")
+};
+const unsigned nsogc_init_command_count =
+    (unsigned)(sizeof(nsogc_init_commands)/sizeof(nsogc_init_commands[0]));
+
+int nsogc_decode(const uint8_t *p, size_t n, struct nsogc_state *s) {
+    if (!p || !s || n < 15 || p[0] != NSOGC_REPORT_GC) return -1;
+    memset(s, 0, sizeof(*s));
+    s->a = !!(p[3] & 1); s->b = !!(p[3] & 2);
+    s->x = !!(p[3] & 4); s->y = !!(p[3] & 8);
+    s->r_click = !!(p[3] & 0x10); s->z = !!(p[3] & 0x20);
+    s->start = !!(p[3] & 0x40);
+    s->down = !!(p[4] & 1); s->right = !!(p[4] & 2);
+    s->left = !!(p[4] & 4); s->up = !!(p[4] & 8);
+    s->l_click = !!(p[4] & 0x10);
+    s->left_shoulder = !!(p[4] & 0x20);
+    s->guide = !!(p[5] & 1); s->share = !!(p[5] & 2);
+    s->c = !!(p[5] & 0x10);
+    s->lx = (uint16_t)(p[6] | ((p[7] & 0x0f) << 8));
+    s->ly = (uint16_t)((p[7] >> 4) | (p[8] << 4));
+    s->rx = (uint16_t)(p[9] | ((p[10] & 0x0f) << 8));
+    s->ry = (uint16_t)((p[10] >> 4) | (p[11] << 4));
+    s->lt = p[13]; s->rt = p[14];
+    return 0;
+}
