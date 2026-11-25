@@ -32,8 +32,8 @@ const unsigned nsogc_init_command_count =
 int nsogc_decode(const uint8_t *p, size_t n, struct nsogc_state *s) {
     if (!p || !s || n < 15 || p[0] != NSOGC_REPORT_GC) return -1;
     memset(s, 0, sizeof(*s));
-    s->a = !!(p[3] & 1); s->b = !!(p[3] & 2);
-    s->x = !!(p[3] & 4); s->y = !!(p[3] & 8);
+    s->a = !!(p[3] & 2); s->b = !!(p[3] & 1);
+    s->x = !!(p[3] & 8); s->y = !!(p[3] & 4);
     s->r_click = !!(p[3] & 0x10); s->z = !!(p[3] & 0x20);
     s->start = !!(p[3] & 0x40);
     s->down = !!(p[4] & 1); s->right = !!(p[4] & 2);
